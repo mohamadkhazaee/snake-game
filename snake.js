@@ -1,5 +1,11 @@
 const container = document.getElementById("container");
 const sound = document.getElementById("audio");
+let food = [10, 15];
+const random = (min, max) => Math.floor(Math.random() * (max - min)) + min;
+function changeFood() {
+  food = [random(0, SIZE), random(0, SIZE)];
+  console.log(food);
+}
 const pixels = new Map();
 const CELLS = 20;
 const SIZE = 25;
@@ -23,7 +29,6 @@ function checkReverseMove(currentMove, prevMove) {
   if (currentMove === "RIGHT" && prevMove === "LEFT") {
     return prevMove;
   }
-  console.log(currentMove, prevMove);
   return currentMove;
 }
 window.addEventListener("keydown", checkKey);
@@ -39,6 +44,14 @@ let snakeCurrenctPosition = [
   [3, 0],
   [4, 0],
 ];
+function getSnakePositionsSet(snake) {
+  const snakePositions = new Set();
+  for (const [x, y] of snake) {
+    let position = x + "_" + y;
+    snakePositions.add(position);
+  }
+  return snakePositions;
+}
 function initializeBoard() {
   for (let i = 0; i < CELLS; i++) {
     for (let j = 0; j < CELLS; j++) {
@@ -57,16 +70,13 @@ function initializeBoard() {
 }
 initializeBoard();
 function drawSnake(snake) {
-  const snakePositions = new Set();
-  for (const [x, y] of snake) {
-    let position = x + "_" + y;
-    snakePositions.add(position);
-  }
+  const snakePositions = getSnakePositionsSet(snake);
   for (let i = 0; i < CELLS; i++) {
     for (let j = 0; j < CELLS; j++) {
       let position = i + "_" + j;
+      let foodPosition = food[0] + "_" + food[1];
       let cell = pixels.get(position);
-      if (snakePositions.has(position)) {
+      if (snakePositions.has(position) || foodPosition === position) {
         cell.style.backgroundColor = "black";
       } else {
         cell.style.backgroundColor = "white";
@@ -89,13 +99,43 @@ function move([a, b], direction) {
   }
 }
 function step() {
-  // removing the tail
-  snakeCurrenctPosition = snakeCurrenctPosition.filter(
-    (_, index) => index !== 0
-  );
   const head = snakeCurrenctPosition[snakeCurrenctPosition.length - 1];
   const nextHead = move(head, DIRECTION);
+  if (!checkValidHead(snakeCurrenctPosition, nextHead)) {
+    stopGame();
+    return;
+  }
   snakeCurrenctPosition.push(nextHead);
+  // removing the tail
+  let nextHeadPosition = nextHead[0] + "_" + nextHead[1];
+  let foodPosition = food[0] + "_" + food[1];
+  if (foodPosition !== nextHeadPosition) {
+    snakeCurrenctPosition = snakeCurrenctPosition.filter(
+      (_, index) => index !== 0
+    );
+  } else {
+    changeFood();
+  }
   drawSnake(snakeCurrenctPosition);
 }
-setInterval(step, 300);
+function checkValidHead(snake, [top, left]) {
+  if (top < 0 || top >= CELLS) {
+    console.log(top, left);
+
+    return false;
+  }
+  if (left < 0 || left >= CELLS) {
+    return false;
+  }
+  let position = top + "_" + left;
+  let snakePositions = getSnakePositionsSet(snake);
+  if (snakePositions.has(position)) {
+    return false;
+  }
+  return true;
+}
+function stopGame() {
+  clearInterval(interval);
+  container.style.borderColor = "red";
+}
+const interval = setInterval(step, 100);
