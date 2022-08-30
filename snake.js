@@ -1,9 +1,22 @@
 const container = document.getElementById("container");
 const sound = document.getElementById("audio");
+let snakeCurrenctPosition = [
+  [1, 0],
+  [2, 0],
+  [3, 0],
+  [4, 0],
+];
 let food = [10, 15];
 const random = (min, max) => Math.floor(Math.random() * (max - min)) + min;
 function changeFood() {
-  food = [random(0, SIZE), random(0, SIZE)];
+  let temp = [random(0, SIZE), random(0, SIZE)];
+  let tempPosition = temp[0] + "_" + temp[1];
+  let snakePositions = getSnakePositionsSet(snakeCurrenctPosition);
+  if (snakePositions.has(tempPosition)) {
+    changeFood();
+  } else {
+    food = temp;
+  }
   console.log(food);
 }
 const pixels = new Map();
@@ -37,13 +50,6 @@ function checkKey(e) {
   DIRECTION = checkReverseMove(keyCodeMap[e.keyCode], DIRECTION);
   sound.currentTime = 0;
 }
-
-let snakeCurrenctPosition = [
-  [1, 0],
-  [2, 0],
-  [3, 0],
-  [4, 0],
-];
 function getSnakePositionsSet(snake) {
   const snakePositions = new Set();
   for (const [x, y] of snake) {
